@@ -1,0 +1,5 @@
+This tree of gauss grew from a seed 160
+Standard deviation of a branch is 38.7298334621
+Standard deviation of the tree 94.8683298051
+Horizontal branch shifts: [-41.70489788830183, 10.426224472075457, 38.22948973094335]
+Branch probabilites: [0.36303934299218327, 0.04608845239949027, 0.5908722046083265]
