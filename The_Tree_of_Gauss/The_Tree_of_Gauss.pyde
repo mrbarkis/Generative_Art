@@ -12,12 +12,12 @@ random.seed(seed)
 print("This tree of gauss grew from a seed {}".format(seed))
 
 ### PICK BRANCH PARAMETERS
-l = 63  # Height of the first branch, i.e. of the trunk
-l_rate = 0.93  # Rate at which the braches get shorter
+l = 50  # Height of the first branch, i.e. of the trunk
+l_rate = 0.88  # Rate at which the braches get shorter
 thickness = 40  # Thickness of the first branch, i.e. of the trunk
 level = 6  # Levels of branches
 N_branches = 3
-var = 1500  # Variance (in x direction) of each branching)
+var = 800  # Variance (in x direction) of each branching)
 std = sqrt(var * level)  # of the hill
 print("Standard deviation of a branch is {}".format(sqrt(var)))
 print("Standard deviation of the tree {}".format(sqrt(var * level)))
@@ -145,8 +145,10 @@ def branch(b_length, x, p, level, end_position, thickness, previous_point=(0, 0)
 
 def setup():
 
-    size(595, 842)  # A1 poster in mm
+    #size(595, 842)  # A1 poster in mm
+    #size(400, 600)
     #size(595, 842, PDF, "tree.pdf")
+    size(400, 600, PDF, "tree_4by6.pdf")
     noLoop()
     # fullScreen()
 

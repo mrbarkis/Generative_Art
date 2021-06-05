@@ -1,0 +1,12 @@
+
+# Longest run
+"""Options For Visuals"""
+seed =123
+plot_realtime = False
+"""Options For Simulation"""
+N_seg_max = 5  # How many points to permute at once.
+N_temps = 2000
+Tmax = 300
+Tmin = 1
+cooling_rate = -(Tmax - Tmin) / N_temps
+N_walks = 10000 # math.ceil(N_nodes*math.log10(N_cities)

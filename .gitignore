@@ -1,2 +1,4 @@
 sketch.properties
 tree.pdf
+.ipynb_checkpoints/
+__pycache__/
