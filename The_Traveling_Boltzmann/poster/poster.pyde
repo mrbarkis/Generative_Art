@@ -51,6 +51,7 @@ def drawCurve(xs, ys, col=[100, 100, 200], thickness=3, filled=True):
 def loadData():
     
     path = pickle.load(open(os.path.join('..', 'data', 'best_route_8586206.p'), "rb" ) )
+    #path = pickle.load(open(os.path.join('..', 'data', 'best_route_8545015.p'), "rb" ) )
 
     xs, ys =[], []
     for node in path:
