@@ -2,7 +2,10 @@ import networkx as nx
 import numpy as np
 import random
 import matplotlib.pyplot as plt
-
+from numpy.random import RandomState
+import copy
+from shapely.geometry import LineString
+from itertools import combinations
 
 
 def node_distance(Graph, n1, n2):
@@ -70,7 +73,7 @@ def get_rnd_graph(N, size=(640, 360), margin=(0, 0, 0, 0), seed=123):
     return G
 
 
-def get_rnd_segment(Graph, N_seg, reach):
+def get_rnd_segment(Graph, N_seg, reach, prng):
     """Select a random segment from graph
 
     Args:
@@ -84,10 +87,10 @@ def get_rnd_segment(Graph, N_seg, reach):
     """
     # Sample random segment from the Graph:
     seg = set()
-    n = np.random.randint(low=0, high=Graph.graph["N"])
+    n = prng.randint(low=0, high=Graph.graph["N"])
     while len(seg) < N_seg:
         seg.add(n)
-        n = np.random.choice(list(Graph.neighbors(n)))
+        n = prng.choice(list(Graph.neighbors(n)))
 
     # Find the ends and neighbours of the segment:
     nbrs = []
@@ -100,7 +103,7 @@ def get_rnd_segment(Graph, N_seg, reach):
 
     # Sample new neighbours for the segment:
     #n1 = np.random.randint(low=0, high=Graph.graph["N"])
-    rnd_end = np.random.choice(ends)
+    rnd_end = prng.choice(ends)
     nearby = set(get_nearby(Graph, rnd_end, reach)).difference(seg)
    
     while len(nearby) == 0: #no nodes nearby
@@ -108,13 +111,13 @@ def get_rnd_segment(Graph, N_seg, reach):
         reach = 2 * reach
         nearby = set(get_nearby(Graph, rnd_end, reach)).difference(seg)
     
-    n1 = np.random.choice(list(nearby))
+    n1 = prng.choice(list(nearby))
     #    n1 = np.random.randint(low=0, high=Graph.graph["N"])
 
-    n2 = np.random.choice(list(Graph.neighbors(n1)))
+    n2 = prng.choice(list(Graph.neighbors(n1)))
     
     while n2 in seg:
-        n2 = np.random.choice(list(Graph.neighbors(n1)))
+        n2 = prng.choice(list(Graph.neighbors(n1)))
 
     new_nbrs = [n1, n2]
 
@@ -173,8 +176,8 @@ def diff_E(Graph, seg, ends, nbrs, new_nbrs):
     return diff_E
     
     
-def plot_Graph(ax, Graph, T, T_range=(0,300), N_walk=0):
-    Tmin, Tmax = T_range
+def plot_Graph(ax, Graph, kT, kTs, N_walk=0):
+    kT_min, kT_max = kTs[-1], kTs[0]
     ax.cla()
     #ax.set_title(
     #    "T = %.f, Walk = %.f, Length = %.2f" % (T, N_walk, Graph.graph["length"])
@@ -185,22 +188,22 @@ def plot_Graph(ax, Graph, T, T_range=(0,300), N_walk=0):
         with_labels=False,
         node_size=10,
         ax=ax,
-        node_color=[T] * Graph.graph["N"],
+        node_color=[kT] * Graph.graph["N"],
         cmap=plt.cm.plasma,
-        vmin=Tmin,
-        vmax=Tmax,
-        edge_color=[T] * Graph.graph["N"],
+        vmin=kT_min,
+        vmax=kT_max,
+        edge_color=[kT] * Graph.graph["N"],
         edge_cmap=plt.cm.plasma,
-        edge_vmin=Tmin,
-        edge_vmax=Tmax,
+        edge_vmin=kT_min,
+        edge_vmax=kT_max
     )
 
 
-def plot_log(axs, temps, lengths, T_range =(0,300), k_b=2, N_cities=233):
-    ax, ax_twinx, ax_twiny = axs
-    Tmin, Tmax = T_range
+def plot_log(ax, track_kT, track_E, kTs, N_cities=233):
+    kT_min, kT_max = kTs[-1] / 1000, kTs[0] / 1000
     ax.cla()
-    ax.set(xlim=(Tmax, Tmin - 1), ylabel="Total Distance (Energy) [km]", xlabel="Temperature [K]")
+    #ax.set_ylim(top=60)
+    ax.set(xlim=(kT_max, kT_min), title= 'avg. distance between cities vs. available "thermal energy"', ylabel="E / N [km]", xlabel="kT [km]")
     ax.tick_params(
         axis="both",
         which="both",
@@ -209,21 +212,7 @@ def plot_log(axs, temps, lengths, T_range =(0,300), k_b=2, N_cities=233):
         left=True,
         labelleft=True,
     )
-    ax.scatter(temps, lengths, cmap=plt.cm.plasma, c=temps, vmin=Tmin, vmax=Tmax)
-   
-    # set up twiny axis
-    ax_twiny.cla()
-    ax_twiny.set(xlim=(Tmax, Tmin - 1), xlabel='Available "Thermal Energy" kT [km]')
-    ax_twiny.set_xticks(ax.get_xticks())
-    ax_twiny.set_xbound(ax.get_xbound())
-    ax_twiny.set_xticklabels([int(k_b * T / 1000) for T in ax.get_xticks()])
-    
-     # set up twiny axis
-    ax_twinx.cla()
-    ax_twinx.set(ylabel='Average Distance Between Stops [km]')
-    ax_twinx.set_yticks(ax.get_yticks())
-    ax_twinx.set_ybound(ax.get_ybound())
-    ax_twinx.set_yticklabels([int(e / N_cities) for e in ax.get_yticks()])
+    ax.scatter(np.asarray(track_kT) / 1000, np.asarray(track_E) / N_cities, cmap=plt.cm.plasma, c=np.asarray(track_kT) / 1000, vmin=kT_min, vmax=kT_max)
 
 
 def path_to_list(G):
@@ -243,3 +232,24 @@ def path_to_list(G):
 
     
     return q
+    
+def reset(G_start, G_best, seed):
+    return (copy.deepcopy(G_start),
+            copy.deepcopy(G_best),
+            RandomState(seed),
+            [],
+            [])
+
+
+def get_coordinates(Graph, node):
+    return tuple(Graph.nodes[node]['pos'])
+
+
+def count_intersections(Graph):
+    count = 0
+    for edge_1, edge_2 in combinations(Graph.edges(), 2):
+        segment_1 = LineString([get_coordinates(Graph, edge_1[n]) for n in range(2)])
+        segment_2 = LineString([get_coordinates(Graph, edge_2[n]) for n in range(2)])
+        count += segment_1.intersects(segment_2)
+    
+    return count - Graph.graph['N'] # each segment intersects with its neighbour
