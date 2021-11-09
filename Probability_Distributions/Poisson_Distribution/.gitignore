@@ -1,0 +1,5 @@
+*~
+*.class
+
+collision_times.pickle
+audio_track.wav
