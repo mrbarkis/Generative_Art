@@ -1,0 +1,5 @@
+*.wav
+!alien.wav
+!chord.wav
+!noise.wav
+*.mp4
