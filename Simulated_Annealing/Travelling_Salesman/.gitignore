@@ -1,0 +1,10 @@
+*.swp
+*.xcf
+*kTs.gif
+*kTs.mp4
+
+
+# processing files
+sketch.properties
+*.autosave
+*.pdf
